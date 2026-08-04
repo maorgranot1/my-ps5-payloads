@@ -1,0 +1,20 @@
+{
+  "name": "My Custom Payloads",
+  "payloads": [
+    {
+      "name": "ftpsrv",
+      "filename": "ftpsrv-ps5.elf",
+      "url": "https://github.com/ps5-payload-dev/ftpsrv/releases/download/v0.21/ftpsrv-ps5.elf",
+      "description": "A simple FTP server that accepts connections on port 2121",
+      "version": "v0.21",
+      "checksum": "c580f0534ac6349dc5a4a5c656eaced537b4c2b18da51886d943cea6393436c8"
+    },
+    {
+      "name": "Debug Tool",
+      "filename": "debug_tool.elf",
+      "url": "https://example.com/payloads/debug_tool.elf",
+      "description": "A helper utility to dump debug information.",
+      "version": "v1.0"
+    }
+  ]
+}
