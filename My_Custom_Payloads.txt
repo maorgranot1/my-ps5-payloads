@@ -34,21 +34,21 @@
       "name": "nanoDNS",
       "filename": "nanodns.elf",
       "url": "https://github.com/drakmor/nanoDNS/releases/download/0.3/nanodns.elf",
-      "version": "v0.3",
+      "version": "0.3",
       "checksum": "ce1c8b31036ab948da65b362a4b6f249ffca8a555fc5bc4b051ec65d041bc944"
     },
     {
       "name": "ShadowMountPlus",
       "filename": "shadowmountplus.elf",
       "url": "https://github.com/drakmor/ShadowMountPlus/releases/download/1.6beta16/shadowmountplus.elf",
-      "version": "v1.6beta16",
+      "version": "1.6beta16",
       "checksum": "a35246fb3bb6042b25653b51cdcbc33254b40339342bf1d2dd0d2eceee2ca526"
     },
     {
       "name": "etaHEN",
       "filename": "etaHEN-2.5B.bin",
       "url": "https://github.com/etaHEN/etaHEN/releases/download/2.5B/etaHEN-2.5B.bin",
-      "version": "v2.5B",
+      "version": "2.5B",
       "checksum": "4845cac45095361b8983b14d6690622183b0dcfbf6d7fda16e161aa91ff0531e"
     },
     {
