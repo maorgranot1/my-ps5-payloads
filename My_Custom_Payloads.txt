@@ -10,11 +10,11 @@
       "checksum": "c580f0534ac6349dc5a4a5c656eaced537b4c2b18da51886d943cea6393436c8"
     },
     {
-      "name": "Debug Tool",
-      "filename": "debug_tool.elf",
-      "url": "https://example.com/payloads/debug_tool.elf",
-      "description": "A helper utility to dump debug information.",
-      "version": "v1.0"
+      "name": "PS5 Game Compressor",
+      "filename": "game-compressor.elf",
+      "url": "https://github.com/juma-sayeh/PS5-Game-Compressor/releases/download/v1.0.3/game-compressor.elf",
+      "version": "v1.0.3",
+      "checksum": "51b66edf6210c022d57a31ab12bf97f95a3c71ea683df387d9081494f11606b2"
     }
   ]
 }
