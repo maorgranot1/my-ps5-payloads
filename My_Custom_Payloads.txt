@@ -15,6 +15,13 @@
       "url": "https://github.com/juma-sayeh/PS5-Game-Compressor/releases/download/v1.0.3/game-compressor.elf",
       "version": "v1.0.3",
       "checksum": "51b66edf6210c022d57a31ab12bf97f95a3c71ea683df387d9081494f11606b2"
+    },
+    {
+      "name": "Garlic SaveMgr",
+      "filename": "garlic-savemgr.elf",
+      "url": "https://github.com/earthonion/garlic-savemgr/releases/download/v1.7/garlic-savemgr.elf",
+      "version": "v1.7",
+      "checksum": "124051ab3a762474720ae53187d2920bc96d6be1d69aa298e715667efc385a2f"
     }
   ]
 }
