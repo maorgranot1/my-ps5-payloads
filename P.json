@@ -1,6 +1,4 @@
-{
-  "name": "My Payloads",
-  "payloads": [
+[
     {
       "name": "ftpsrv",
       "filename": "ftpsrv-ps5.elf",
@@ -67,4 +65,3 @@
       "checksum": "ee8f47e4d6a5fd85cef113341aa1eb74d68e373a58fcb1fb5a9274acd2b83bd2"
     }
   ]
-}
