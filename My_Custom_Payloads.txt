@@ -3,7 +3,7 @@
   "payloads": [
     {
       "name": "ftpsrv",
-      "filename": "ftpsrvPs5.elf",
+      "filename": "FtpsrvPs5.elf",
       "url": "https://github.com/ps5-payload-dev/ftpsrv/releases/download/v0.21/ftpsrv-ps5.elf",
       "description": "A simple FTP server that accepts connections on port 2121",
     "last_update": "2026-08-04",
