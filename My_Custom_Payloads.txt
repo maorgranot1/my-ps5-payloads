@@ -43,8 +43,8 @@
       "checksum": "ce1c8b31036ab948da65b362a4b6f249ffca8a555fc5bc4b051ec65d041bc944"
     },
     {
-      "name": "ShadowMountPlus",
-      "filename": "ShadowMountPlus.elf",
+      "name": "ShadowmountPlus",
+      "filename": "ShadowmountPlus.elf",
       "url": "https://github.com/drakmor/ShadowMountPlus/releases/download/1.6beta16/shadowmountplus.elf",
     "last_update": "2026-08-04",
       "version": "1.6beta16",
