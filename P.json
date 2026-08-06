@@ -1,6 +1,6 @@
 [
     {
-      "name": "ftpsrv",
+      "name": "ftpsrv ps5",
       "filename": "ftpsrv-ps5.elf",
       "url": "https://github.com/ps5-payload-dev/ftpsrv/releases/download/v0.21/ftpsrv-ps5.elf",
       "description": "A simple FTP server that accepts connections on port 2121",
