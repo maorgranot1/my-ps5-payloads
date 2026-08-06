@@ -1,67 +1,74 @@
 [
-  {
-    "name": "ftpsrv",
-    "filename": "ftpsrv-ps5.elf",
-    "url": "https://github.com/ps5-payload-dev/ftpsrv/releases/download/v0.21/ftpsrv-ps5.elf",
-    "description": "A simple FTP server that accepts connection on port 2121",
-    "last_update": "2026-08-06",
-    "version": "v0.21",
-    "checksum": "c580f0534ac6349dc5a4a5c656eaced537b4c2b18da51886d943cea6393436c8"
-  },
-  {
-    "name": "PS5 Game Compressor",
-    "filename": "game-compressor.elf",
-    "url": "https://github.com/juma-sayeh/PS5-Game-Compressor/releases/download/v1.0.3/game-compressor.elf",
+    {
+      "name": "ftpsrv",
+      "filename": "ftpsrv-ps5.elf",
+      "url": "https://github.com/ps5-payload-dev/ftpsrv/releases/download/v0.20/ftpsrv-ps5.elf",
+      "description": "A simple FTP server that accepts connections on port 2121",
+    "last_update": "2026-05-12",
+      "version": "v0.20",
+      "checksum": "8f305a959fb9d70fd8d52ba88409e0d5a1632e83d4ecdd38646a0a33e54089da"
+    },
+    {
+      "name": "PS5 Game Compressor",
+      "filename": "game-compressor.elf",
+      "url": "https://github.com/juma-sayeh/PS5-Game-Compressor/releases/download/v1.0.3/game-compressor.elf",
+      "description": "A background service that compresses installed games to free up storage space",
     "last_update": "2026-08-04",
-    "version": "v1.0.3",
-    "checksum": "51b66edf6210c022d57a31ab12bf97f95a3c71ea683df387d9081494f11606b2"
-  },
-  {
-    "name": "Garlic SaveMgr for PS5",
-    "filename": "garlic-savemgr.elf",
-    "url": "https://github.com/earthonion/garlic-savemgr/releases/download/v1.7/garlic-savemgr.elf",
+      "version": "v1.0.3",
+      "checksum": "51b66edf6210c022d57a31ab12bf97f95a3c71ea683df387d9081494f11606b2"
+    },
+    {
+      "name": "Garlic SaveMgr for PS5",
+      "filename": "garlic-savemgr.elf",
+      "url": "https://github.com/earthonion/garlic-savemgr/releases/download/v1.7/garlic-savemgr.elf",
+      "description": "A utility that extracts, backs up, and restores game save files",
     "last_update": "2026-08-04",
-    "version": "v1.7",
-    "checksum": "124051ab3a762474720ae53187d2920bc96d6be1d69aa298e715667efc385a2f"
-  },
-  {
-    "name": "kstuff-lite",
-    "filename": "kstuff.elf",
-    "url": "https://github.com/EchoStretch/kstuff-lite/releases/download/v1.09/kstuff.elf",
+      "version": "v1.7",
+      "checksum": "124051ab3a762474720ae53187d2920bc96d6be1d69aa298e715667efc385a2f"
+    },
+    {
+      "name": "kstuff-lite",
+      "filename": "kstuff.elf",
+      "url": "https://github.com/EchoStretch/kstuff-lite/releases/download/v1.09/kstuff.elf",
+      "description": "Kernel patcher that enables to install & run unsigned game packages",
     "last_update": "2026-08-04",
-    "version": "v1.09",
-    "checksum": "ec5212794dc6e44ee8e70fd0549abec6d3dac8c3e03ddbeafd9f869ffe97d4e8"
-  },
-  {
-    "name": "nanoDNS",
-    "filename": "nanodns.elf",
-    "url": "https://github.com/drakmor/nanoDNS/releases/download/0.3/nanodns.elf",
+      "version": "v1.09",
+      "checksum": "ec5212794dc6e44ee8e70fd0549abec6d3dac8c3e03ddbeafd9f869ffe97d4e8"
+    },
+    {
+      "name": "nanoDNS",
+      "filename": "nanodns.elf",
+      "url": "https://github.com/drakmor/nanoDNS/releases/download/0.3/nanodns.elf",
+      "description": "A lightweight DNS proxy that blocks PlayStation update servers",
     "last_update": "2026-08-04",
-    "version": "0.3",
-    "checksum": "ce1c8b31036ab948da65b362a4b6f249ffca8a555fc5bc4b051ec65d041bc944"
-  },
-  {
-    "name": "ShadowMountPlus",
-    "filename": "shadowmountplus.elf",
-    "url": "https://github.com/drakmor/ShadowMountPlus/releases/download/1.6beta16/shadowmountplus.elf",
+      "version": "0.3",
+      "checksum": "ce1c8b31036ab948da65b362a4b6f249ffca8a555fc5bc4b051ec65d041bc944"
+    },
+    {
+      "name": "ShadowMountPlus",
+      "filename": "shadowmountplus.elf",
+      "url": "https://github.com/drakmor/ShadowMountPlus/releases/download/1.6beta16/shadowmountplus.elf",
+      "description": "A utility that mounts game packages and disk images as virtual directories",
     "last_update": "2026-08-04",
-    "version": "1.6beta16",
-    "checksum": "a35246fb3bb6042b25653b51cdcbc33254b40339342bf1d2dd0d2eceee2ca526"
-  },
-  {
-    "name": "etaHEN",
-    "filename": "etaHEN-2.5B.bin",
-    "url": "https://github.com/etaHEN/etaHEN/releases/download/2.5B/etaHEN-2.5B.bin",
+      "version": "1.6beta16",
+      "checksum": "a35246fb3bb6042b25653b51cdcbc33254b40339342bf1d2dd0d2eceee2ca526"
+    },
+    {
+      "name": "etaHEN",
+      "filename": "etaHEN-2.5B.bin",
+      "url": "https://github.com/etaHEN/etaHEN/releases/download/2.5B/etaHEN-2.5B.bin",
+      "description": "An all-in-one payload that enables running unsigned games and unlocks debug settings",
     "last_update": "2026-08-04",
-    "version": "2.5B",
-    "checksum": "4845cac45095361b8983b14d6690622183b0dcfbf6d7fda16e161aa91ff0531e"
-  },
-  {
-    "name": "Elf Arsenal",
-    "filename": "elf-arsenal.elf",
-    "url": "https://git.etawen.dev/soniciso/elf-arsenal/releases/download/v1.6.22/elf-arsenal.elf",
+      "version": "2.5B",
+      "checksum": "4845cac45095361b8983b14d6690622183b0dcfbf6d7fda16e161aa91ff0531e"
+    },
+    {
+      "name": "Elf Arsenal",
+      "filename": "elf-arsenal.elf",
+      "url": "https://git.etawen.dev/soniciso/elf-arsenal/releases/download/v1.6.22/elf-arsenal.elf",
+      "description": "A centralized dashboard for managing and launching system payloads.",
     "last_update": "2026-08-04",
-    "version": "v1.6.22",
-    "checksum": "ee8f47e4d6a5fd85cef113341aa1eb74d68e373a58fcb1fb5a9274acd2b83bd2"
-  }
-]
+      "version": "v1.6.22",
+      "checksum": "ee8f47e4d6a5fd85cef113341aa1eb74d68e373a58fcb1fb5a9274acd2b83bd2"
+    }
+  ]
