@@ -1,0 +1,72 @@
+name: Auto-Build Custom pldmgr.elf
+
+on:
+  schedule:
+    - cron: '12 13 * * *' # Checks for new updates automatically every midnight
+  workflow_dispatch: # Gives you a button to trigger it manually
+
+jobs:
+  build_and_release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to publish the release
+    
+    steps:
+      - name: Get latest release version of official pldmgr
+        id: get_tag
+        run: |
+          LATEST_TAG=$(curl -s https://api.github.com/repos/itsPLK/ps5-payload-manager/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          
+      - name: Check if we already released this version
+        id: check_release
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ steps.get_tag.outputs.tag }})
+          if [ "$STATUS" = "200" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout the official source code
+        if: steps.check_release.outputs.exists == 'false'
+        uses: actions/checkout@v4
+        with:
+          repository: itsPLK/ps5-payload-manager
+          ref: ${{ steps.get_tag.outputs.tag }}
+          submodules: recursive
+
+      - name: Patch the Default Source URL
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          # Swap the official URL string with your custom one across all files
+          find . -type f -exec sed -i 's|https://itsplk.github.io/ps5-payloads-mirror/payloads.json|https://maorgranot1.github.io/my-ps5-payloads/P.json|g' {} +
+
+      - name: Setup Node.js (For Web UI Build)
+        if: steps.check_release.outputs.exists == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build the Web Interface
+        if: steps.check_release.outputs.exists == 'false'
+        run: make frontend-build
+
+      - name: Build the PS5 SDK Docker Environment
+        if: steps.check_release.outputs.exists == 'false'
+        run: docker build -t ps5-payload-sdk -f Dockerfile.sdk .
+
+      - name: Compile the modified ELF file
+        if: steps.check_release.outputs.exists == 'false'
+        run: docker run --rm -v $(pwd):/src -w /src ps5-payload-sdk make clean all
+
+      - name: Publish the New Release
+        if: steps.check_release.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_tag.outputs.tag }}
+          name: "Custom Build ${{ steps.get_tag.outputs.tag }}"
+          body: "Automated compile of pldmgr.elf with a custom default repository."
+          files: pldmgr.elf
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
