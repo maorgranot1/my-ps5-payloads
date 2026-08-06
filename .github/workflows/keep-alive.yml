@@ -1,0 +1,30 @@
+name: Keep Alive
+
+on:
+  schedule:
+    # Runs at 08:41 UTC on the 16st of every month
+    - cron: '41 8 16 * *'
+  workflow_dispatch: 
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write 
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Create Keep-Alive Commit
+        run: |
+          # Set up the bot's identity
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Write the current date to a hidden text file to ensure a file changes
+          date > .github/keepalive.txt
+          
+          # Save and push the change to the repository
+          git add .github/keepalive.txt
+          git commit -m "chore: keep github actions alive"
+          git push
