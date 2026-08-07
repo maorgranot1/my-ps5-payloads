@@ -42,6 +42,69 @@ jobs:
           # Swap the official URL string with your custom one across all files
           find . -type f -exec sed -i 's|https://itsplk.github.io/ps5-payloads-mirror/payloads.json|https://maorgranot1.github.io/my-ps5-payloads/P.json|g' {} +
 
+      - name: Inject Autoloader Copy Logic
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          cat << 'EOF' > patch_c_code.py
+          import os
+
+          # 1. Find the target file dynamically
+          target_file = None
+          for root, dirs, files in os.walk('.'):
+              for file in files:
+                  if file.endswith('.c'):
+                      path = os.path.join(root, file)
+                      with open(path, 'r', encoding='utf-8') as f:
+                          if 'payload_mgr_import_to_storage' in f.read():
+                              target_file = path
+                              break
+              if target_file: break
+
+          if not target_file:
+              print("Error: Could not find the C file containing the payload manager logic.")
+              exit(1)
+              
+          with open(target_file, 'r', encoding='utf-8') as f:
+              content = f.read()
+
+          # 2. Define the code to inject
+          helpers = """
+          static int is_autoloader_target(const char *filename) {
+              if (!filename) return 0;
+              return (strcasecmp(filename, "kstuff.elf") == 0 ||
+                      strcasecmp(filename, "shadowmountplus.elf") == 0 ||
+                      strcasecmp(filename, "pldmgr.elf") == 0);
+          }
+
+          static void handle_autoloader_copy(const char *src_path, const char *filename) {
+              if (is_autoloader_target(filename)) {
+                  ensure_dir_recursive("/data/ps5_autoloader");
+                  char auto_path[512];
+                  snprintf(auto_path, sizeof(auto_path), "/data/ps5_autoloader/%s", filename);
+                  if (copy_file(src_path, auto_path) == 0) {
+                      pldmgr_log("[PLDMGR] Successfully auto-copied %s to %s\\n", filename, auto_path);
+                  } else {
+                      pldmgr_log("[PLDMGR] Failed to auto-copy %s to %s\\n", filename, auto_path);
+                  }
+              }
+          }
+
+          void payload_mgr_remove_old_files
+          """.strip()
+
+          # 3. Perform string replacements to inject the logic
+          content = content.replace("void payload_mgr_remove_old_files", helpers)
+          content = content.replace("/* Write metadata sidecar */", "handle_autoloader_copy(final_path, filename);\n\n    /* Write metadata sidecar */")
+          content = content.replace("/* Write metadata */", "handle_autoloader_copy(final_path, filename);\n\n    /* Write metadata */")
+
+          # 4. Save the file back
+          with open(target_file, 'w', encoding='utf-8') as f:
+              f.write(content)
+              
+          print(f"Successfully injected autoloader copy logic into {target_file}")
+          EOF
+          python3 patch_c_code.py
+
       - name: Setup Node.js (For Web UI Build)
         if: steps.check_release.outputs.exists == 'false'
         uses: actions/setup-node@v4
@@ -66,7 +129,7 @@ jobs:
         with:
           tag_name: ${{ steps.get_tag.outputs.tag }}
           name: "Custom Build ${{ steps.get_tag.outputs.tag }}"
-          body: "Automated compile of pldmgr.elf with a custom default repository."
+          body: "Automated compile of pldmgr.elf with a custom default repository and auto-copy logic for autoloader payloads."
           files: pldmgr.elf
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
