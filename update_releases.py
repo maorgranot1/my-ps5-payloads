@@ -22,8 +22,8 @@ def calculate_sha256(url):
         print(f"Error downloading {url}: {e}")
         return None
 
-def get_latest_release_info(domain, owner, repo, token, target_filename):
-    """Fetches the latest release and attempts to pull GitHub's auto-generated digest."""
+def get_latest_release_info(domain, owner, repo, token, old_filename, current_version, app_name):
+    """Fetches the latest release with special handling rules per application."""
     if "github.com" in domain:
         api_url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
         headers = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github.v3+json"}
@@ -37,21 +37,39 @@ def get_latest_release_info(domain, owner, repo, token, target_filename):
         data = response.json()
         
         tag_name = data.get("tag_name")
+        assets = data.get("assets", [])
+        
+        if not tag_name:
+            return None, None, old_filename
+            
+        actual_filename = old_filename
         asset_digest = None
         
-        # Scan the API's asset list to find the specific file and extract its native digest
-        for asset in data.get("assets", []):
-            if asset.get("name") == target_filename:
+        # Build the expected filename ONLY if it's etaHEN
+        ext = os.path.splitext(old_filename)[1]
+        expected_filename = old_filename
+        if app_name == "etaHEN":
+            expected_filename = f"etaHEN-{tag_name}{ext}"
+        
+        for asset in assets:
+            name = asset.get("name")
+            if not name:
+                continue
+            
+            # Specific rule: if it's etaHEN, match any asset starting with "etaHEN-" and ending with the correct extension
+            is_etahen_match = (app_name == "etaHEN" and name.startswith("etaHEN-") and name.endswith(ext))
+            
+            if name == old_filename or name == expected_filename or is_etahen_match:
+                actual_filename = name
                 digest = asset.get("digest")
                 if digest and digest.startswith("sha256:"):
-                    # Strip the "sha256:" prefix to get the raw hash string
                     asset_digest = digest.replace("sha256:", "")
                 break
                 
-        return tag_name, asset_digest
+        return tag_name, asset_digest, actual_filename
     except requests.exceptions.RequestException as e:
         print(f"Failed to fetch release for {owner}/{repo}: {e}")
-        return None, None
+        return None, None, old_filename
 
 def main():
     github_token = os.environ.get("GITHUB_TOKEN", "")
@@ -69,15 +87,18 @@ def main():
             print(f"Could not parse URL for {app.get('name')}")
             continue
             
-        domain, owner, repo, filename = match.groups()
+        domain, owner, repo, old_filename = match.groups()
         current_version = app.get('version')
+        app_name = app.get('name')
         
-        latest_tag, precalculated_hash = get_latest_release_info(domain, owner, repo, github_token, filename)
+        latest_tag, precalculated_hash, actual_filename = get_latest_release_info(
+            domain, owner, repo, github_token, old_filename, current_version, app_name
+        )
         
         if latest_tag and latest_tag != current_version:
-            print(f"Update found for {app['name']}: {current_version} -> {latest_tag}")
+            print(f"Update found for {app_name}: {current_version} -> {latest_tag}")
             
-            new_url = f"https://{domain}/{owner}/{repo}/releases/download/{latest_tag}/{filename}"
+            new_url = f"https://{domain}/{owner}/{repo}/releases/download/{latest_tag}/{actual_filename}"
             
             # 1. Use the hash GitHub already calculated for us
             if precalculated_hash:
@@ -91,6 +112,7 @@ def main():
                 app['version'] = latest_tag
                 app['url'] = new_url
                 app['checksum'] = new_checksum
+                app['filename'] = actual_filename
                 app['last_update'] = datetime.datetime.now().strftime("%Y-%m-%d")
                 updated = True
 
