@@ -2,7 +2,7 @@ name: Auto-Build Custom pldmgr.elf
 
 on:
   schedule:
-    - cron: '26 * * * *' # Checks for new updates automatically every midnight
+    - cron: '26 14 * * *' # Checks for new updates automatically every midnight
   workflow_dispatch: # Gives you a button to trigger it manually
 
 jobs:
