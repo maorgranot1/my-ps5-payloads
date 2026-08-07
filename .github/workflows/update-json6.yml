@@ -3,7 +3,7 @@ name: Daily Release Checker
 on:
   schedule:
     # Runs automatically every day at 13:38 PM (Noon) UTC time
-    - cron: '38 13 * * *'
+    - cron: '36 * * * *'
   
   # Adds a button so you can trigger it manually whenever you want
   workflow_dispatch: 
