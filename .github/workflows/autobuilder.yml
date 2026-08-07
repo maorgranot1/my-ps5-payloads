@@ -42,29 +42,6 @@ jobs:
           # Swap the official URL string with your custom one across all files
           find . -type f -exec sed -i 's|https://itsplk.github.io/ps5-payloads-mirror/payloads.json|https://maorgranot1.github.io/my-ps5-payloads/P.json|g' {} +
 
-      - name: Patch Payload Save Logic for Autoloader
-        if: steps.check_release.outputs.exists == 'false'
-        run: |
-          # Use awk to inject the custom C code right before the file is renamed (moved) to the default location
-          cat << 'EOF' > patch.awk
-          /if \(rename\(temp_path, final_path\) != 0\)/ {
-              print "    /* Custom PS5 Autoloader hook */"
-              print "    if (strcasecmp(filename, \"pldmgr.elf\") == 0 || strcasecmp(filename, \"kstuff.elf\") == 0 || strcasecmp(filename, \"Shadowmountplus.elf\") == 0) {"
-              print "        ensure_dir_recursive(\"/data/ps5_autoloader\");"
-              print "        char auto_path[512];"
-              print "        snprintf(auto_path, sizeof(auto_path), \"/data/ps5_autoloader/%s\", filename);"
-              print "        copy_file(temp_path, auto_path);"
-              print "    }"
-          }
-          { print }
-          EOF
-          
-          # Find payload_mgr.c and apply the patch safely
-          for file in $(find . -name "payload_mgr.c"); do
-            awk -f patch.awk "$file" > temp.c
-            mv temp.c "$file"
-          done
-
       - name: Setup Node.js (For Web UI Build)
         if: steps.check_release.outputs.exists == 'false'
         uses: actions/setup-node@v4
@@ -89,7 +66,7 @@ jobs:
         with:
           tag_name: ${{ steps.get_tag.outputs.tag }}
           name: "Custom Build ${{ steps.get_tag.outputs.tag }}"
-          body: "Automated compile of pldmgr.elf with a custom default repository and dual-save logic for autoloader payloads."
+          body: "Automated compile of pldmgr.elf with a custom default repository."
           files: pldmgr.elf
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
