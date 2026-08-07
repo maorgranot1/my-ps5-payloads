@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Check out your repository code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN }} # <--- THIS IS THE ONLY CHANGE
 
       - name: Set up Python
         uses: actions/setup-python@v5
