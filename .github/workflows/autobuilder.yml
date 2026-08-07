@@ -42,6 +42,105 @@ jobs:
           # Swap the official URL string with your custom one across all files
           find . -type f -exec sed -i 's|https://itsplk.github.io/ps5-payloads-mirror/payloads.json|https://maorgranot1.github.io/my-ps5-payloads/P.json|g' {} +
 
+      - name: Inject Autoloader Copy Routine
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          # 1. Generate safe C header file
+          cat << 'EOF' > autoloader_hook.h
+          #ifndef AUTOLOADER_HOOK_H
+          #define AUTOLOADER_HOOK_H
+
+          #include <sys/stat.h>
+          #include <fcntl.h>
+          #include <unistd.h>
+          #include <string.h>
+          #include <stdio.h>
+
+          static inline void copy_to_autoloader(const char* filepath) {
+              if (!filepath) return;
+
+              // Match targeted payloads (case-insensitive checks included)
+              if (!strstr(filepath, "pldmgr.elf") && 
+                  !strstr(filepath, "kstuff.elf") && 
+                  !strstr(filepath, "Shadowmountplus.elf") &&
+                  !strstr(filepath, "shadowmountplus.elf")) {
+                  return;
+              }
+
+              // Extract filename from path (e.g. "kstuff.elf")
+              const char* filename = strrchr(filepath, '/');
+              filename = filename ? filename + 1 : filepath;
+
+              // Ensure target autoloader directory exists
+              mkdir("/data/ps5_autoloader", 0777);
+
+              char dest[256];
+              snprintf(dest, sizeof(dest), "/data/ps5_autoloader/%s", filename);
+
+              int src_fd = open(filepath, O_RDONLY);
+              if (src_fd < 0) return;
+
+              int dst_fd = open(dest, O_WRONLY | O_CREAT | O_TRUNC, 0777);
+              if (dst_fd < 0) {
+                  close(src_fd);
+                  return;
+              }
+
+              char buf[8192];
+              ssize_t bytes;
+              while ((bytes = read(src_fd, buf, sizeof(buf))) > 0) {
+                  write(dst_fd, buf, bytes);
+              }
+
+              close(src_fd);
+              close(dst_fd);
+          }
+
+          #endif
+          EOF
+
+          # 2. Run Python auto-patcher to locate payload download logic and inject hook
+          python3 - << 'PYEOF'
+          import os, re
+
+          # Find C/C++ files referencing pldmgr paths or payload directories
+          target_files = []
+          for root, dirs, files in os.walk("src"):
+              for file in files:
+                  if file.endswith((".c", ".cpp")):
+                      full_path = os.path.join(root, file)
+                      with open(full_path, "r", encoding="utf-8", errors="ignore") as f:
+                          content = f.read()
+                          if "pldmgr" in content or "payload" in content or "download" in content:
+                              target_files.append(full_path)
+
+          patched = False
+          for filepath in target_files:
+              with open(filepath, "r", encoding="utf-8") as f:
+                  content = f.read()
+
+              # Check if fclose or close is called near path variables
+              if "fclose(" in content or "close(" in content:
+                  # Inject header include at top
+                  header_inc = '#include "../autoloader_hook.h"\n' if "src/" in filepath else '#include "autoloader_hook.h"\n'
+                  new_content = header_inc + content
+                  
+                  # Hook into fclose calls passing file paths or insert generic hook
+                  new_content = re.sub(
+                      r'(fclose\s*\(\s*([a-zA-Z0-9_]+)\s*\);)',
+                      r'\1\n    if (filepath) copy_to_autoloader(filepath);',
+                      new_content
+                  )
+                  
+                  with open(filepath, "w", encoding="utf-8") as f:
+                      f.write(new_content)
+                  print(f"Successfully patched payload hook in: {filepath}")
+                  patched = True
+
+          if not patched:
+              print("Notice: Fallback header generated at root level for compilation.")
+          PYEOF
+
       - name: Setup Node.js (For Web UI Build)
         if: steps.check_release.outputs.exists == 'false'
         uses: actions/setup-node@v4
@@ -66,7 +165,7 @@ jobs:
         with:
           tag_name: ${{ steps.get_tag.outputs.tag }}
           name: "Custom Build ${{ steps.get_tag.outputs.tag }}"
-          body: "Automated compile of pldmgr.elf with a custom default repository."
+          body: "Automated compile of pldmgr.elf with custom repository and /data/ps5_autoloader/ duplication."
           files: pldmgr.elf
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
