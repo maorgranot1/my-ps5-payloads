@@ -46,9 +46,9 @@ jobs:
         if: steps.check_release.outputs.exists == 'false'
         run: |
           cat << 'EOF' > patch_c_code.py
-          import os
+          import os, re, sys
 
-          # 1. Find the target file dynamically
+          # 1. Find the target C file
           target_file = None
           for root, dirs, files in os.walk('.'):
               for file in files:
@@ -61,47 +61,64 @@ jobs:
               if target_file: break
 
           if not target_file:
-              print("Error: Could not find the C file containing the payload manager logic.")
-              exit(1)
-              
+              print("Error: Could not find the target C file.")
+              sys.exit(1)
+
           with open(target_file, 'r', encoding='utf-8') as f:
               content = f.read()
 
-          # 2. Define the code to inject
-          helpers = """
-          static int is_autoloader_target(const char *filename) {
-              if (!filename) return 0;
-              return (strcasecmp(filename, "kstuff.elf") == 0 ||
-                      strcasecmp(filename, "shadowmountplus.elf") == 0 ||
-                      strcasecmp(filename, "pldmgr.elf") == 0);
+          # 2. The robust C helper functions using raw strings to protect formatting
+          helpers = r"""
+          static const char* get_autoloader_dest_name(const char *filename) {
+              if (!filename) return NULL;
+              char lower[256];
+              strncpy(lower, filename, sizeof(lower) - 1);
+              lower[255] = '\0';
+              for (int i = 0; lower[i]; i++) {
+                  lower[i] = tolower((unsigned char)lower[i]);
+              }
+              if (strstr(lower, "kstuff") != NULL) return "kstuff.elf";
+              if (strstr(lower, "shadowmountplus") != NULL) return "shadowmountplus.elf";
+              if (strstr(lower, "pldmgr") != NULL) return "pldmgr.elf";
+              return NULL;
           }
 
           static void handle_autoloader_copy(const char *src_path, const char *filename) {
-              if (is_autoloader_target(filename)) {
-                  ensure_dir_recursive("/data/ps5_autoloader");
+              const char* dest_name = get_autoloader_dest_name(filename);
+              if (dest_name != NULL) {
+                  mkdir("/data/ps5_autoloader", 0777); 
                   char auto_path[512];
-                  snprintf(auto_path, sizeof(auto_path), "/data/ps5_autoloader/%s", filename);
-                  if (copy_file(src_path, auto_path) == 0) {
-                      pldmgr_log("[PLDMGR] Successfully auto-copied %s to %s\\n", filename, auto_path);
-                  } else {
-                      pldmgr_log("[PLDMGR] Failed to auto-copy %s to %s\\n", filename, auto_path);
-                  }
+                  snprintf(auto_path, sizeof(auto_path), "/data/ps5_autoloader/%s", dest_name);
+                  copy_file(src_path, auto_path);
               }
           }
+          """
 
-          void payload_mgr_remove_old_files
-          """.strip()
+          # 3. Inject Helper Functions
+          if "void payload_mgr_remove_old_files" not in content:
+              print("Error: Target anchor for helpers not found")
+              sys.exit(1)
+          content = content.replace("void payload_mgr_remove_old_files", helpers + "\n\nvoid payload_mgr_remove_old_files")
 
-          # 3. Perform string replacements to inject the logic
-          content = content.replace("void payload_mgr_remove_old_files", helpers)
-          content = content.replace("/* Write metadata sidecar */", "handle_autoloader_copy(final_path, filename);\n\n    /* Write metadata sidecar */")
-          content = content.replace("/* Write metadata */", "handle_autoloader_copy(final_path, filename);\n\n    /* Write metadata */")
+          # 4. Inject Network Copy (Regex catches the entire if-rename block securely)
+          net_pattern = re.compile(r'(if\s*\(\s*rename\s*\(\s*temp_path\s*,\s*final_path\s*\)\s*!=\s*0\s*\)\s*\{[^\}]+\})')
+          if not net_pattern.search(content):
+              print("Error: Network rename hook failed to match")
+              sys.exit(1)
+          content = net_pattern.sub(r'\1\n\n    handle_autoloader_copy(final_path, filename);', content)
 
-          # 4. Save the file back
+          # 5. Inject USB Copy (Regex catches the entire if-copy block securely)
+          usb_pattern = re.compile(r'(if\s*\(\s*copy_file\s*\(\s*usb_path\s*,\s*final_path\s*\)\s*!=\s*0\s*\)\s*\{[^\}]+\})')
+          if not usb_pattern.search(content):
+              print("Error: USB copy hook failed to match")
+              sys.exit(1)
+          content = usb_pattern.sub(r'\1\n\n    handle_autoloader_copy(final_path, filename);', content)
+
+          # 6. Save modified code
           with open(target_file, 'w', encoding='utf-8') as f:
               f.write(content)
               
-          print(f"Successfully injected autoloader copy logic into {target_file}")
+          print("Injection successful!")
           EOF
           python3 patch_c_code.py
 
