@@ -1,0 +1,162 @@
+name: Auto-Build Custom pldmgr.elf
+
+on:
+  schedule:
+    - cron: '26 14 * * *'
+  workflow_dispatch:
+
+jobs:
+  build_and_release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Get latest release version of official pldmgr
+        id: get_tag
+        run: |
+          LATEST_TAG=$(curl -s https://api.github.com/repos/itsPLK/ps5-payload-manager/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          
+      - name: Check if we already released this version
+        id: check_release
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ steps.get_tag.outputs.tag }})
+          if [ "$STATUS" = "200" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout the official source code
+        if: steps.check_release.outputs.exists == 'false'
+        uses: actions/checkout@v4
+        with:
+          repository: itsPLK/ps5-payload-manager
+          ref: ${{ steps.get_tag.outputs.tag }}
+          submodules: recursive
+
+      - name: Patch the Default Source URL
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          find . -type f -exec sed -i 's|https://itsplk.github.io/ps5-payloads-mirror/payloads.json|https://maorgranot1.github.io/my-ps5-payloads/P.json|g' {} +
+
+      - name: Inject Autoloader Copy Logic into payload_mgr.c
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          cat << 'EOF' > patch_c_code.py
+          import os, sys
+
+          # 1. Target payload_mgr.c
+          target_file = None
+          for root, dirs, files in os.walk('.'):
+              for file in files:
+                  if file.endswith('.c'):
+                      path = os.path.join(root, file)
+                      with open(path, 'r', encoding='utf-8') as f:
+                          if 'payload_mgr_import_to_storage' in f.read():
+                              target_file = path
+                              break
+              if target_file: break
+
+          if not target_file:
+              print("Error: Could not find payload_mgr.c")
+              sys.exit(1)
+
+          print(f"Targeting C file for patch: {target_file}")
+          with open(target_file, 'r', encoding='utf-8') as f:
+              content = f.read()
+
+          # 2. Helper functions
+          helpers = r"""
+          static const char* get_autoloader_dest_name(const char *filename) {
+              if (!filename) return NULL;
+              char lower[256];
+              int i;
+              strncpy(lower, filename, sizeof(lower) - 1);
+              lower[255] = '\0';
+              for (i = 0; lower[i]; i++) {
+                  lower[i] = tolower((unsigned char)lower[i]);
+              }
+              if (strstr(lower, "kstuff") != NULL) return "kstuff.elf";
+              if (strstr(lower, "shadowmountplus") != NULL) return "shadowmountplus.elf";
+              if (strstr(lower, "pldmgr") != NULL) return "pldmgr.elf";
+              return NULL;
+          }
+
+          static void handle_autoloader_copy(const char *src_path, const char *filename) {
+              const char* dest_name = get_autoloader_dest_name(filename);
+              if (dest_name != NULL) {
+                  char auto_path[512];
+                  ensure_dir_recursive("/data/ps5_autoloader");
+                  snprintf(auto_path, sizeof(auto_path), "/data/ps5_autoloader/%s", dest_name);
+                  
+                  if (copy_file(src_path, auto_path) == 0) {
+                      pldmgr_log("[PLDMGR] Autoloader mirror updated successfully: %s\n", dest_name);
+                  } else {
+                      pldmgr_log("[PLDMGR] ERROR: Failed to update autoloader mirror for %s\n", dest_name);
+                  }
+              }
+          }
+          """
+
+          # 3. Insert helpers AFTER copy_file and includes (right before payload_mgr_remove_old_files)
+          anchor_helpers = "void payload_mgr_remove_old_files"
+          if anchor_helpers not in content:
+              print("Error: Anchor 'void payload_mgr_remove_old_files' not found")
+              sys.exit(1)
+
+          content = content.replace(anchor_helpers, helpers + "\n\n" + anchor_helpers, 1)
+
+          # 4. Inject hook into network import
+          target_net = 'write_simple_payload_details_json(filename, details_path, install_source, install_source_detail);'
+          if target_net not in content:
+              print("Error: Network import anchor line not found!")
+              sys.exit(1)
+
+          content = content.replace(target_net, f'handle_autoloader_copy(final_path, filename);\n    {target_net}', 1)
+
+          # 5. Inject hook into USB move
+          target_usb = 'write_simple_payload_details_json(filename, details_path, "usb", usb_path);'
+          if target_usb not in content:
+              print("Error: USB move anchor line not found!")
+              sys.exit(1)
+
+          content = content.replace(target_usb, f'handle_autoloader_copy(final_path, filename);\n    {target_usb}', 1)
+
+          with open(target_file, 'w', encoding='utf-8') as f:
+              f.write(content)
+              
+          print("Autoloader patch successfully injected after headers!")
+          EOF
+          python3 patch_c_code.py
+      
+      - name: Setup Node.js (For Web UI Build)
+        if: steps.check_release.outputs.exists == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build the Web Interface
+        if: steps.check_release.outputs.exists == 'false'
+        run: make frontend-build
+
+      - name: Build the PS5 SDK Docker Environment
+        if: steps.check_release.outputs.exists == 'false'
+        run: docker build -t ps5-payload-sdk -f Dockerfile.sdk .
+
+      - name: Compile the modified ELF file
+        if: steps.check_release.outputs.exists == 'false'
+        run: docker run --rm -v $(pwd):/src -w /src ps5-payload-sdk make clean all
+
+      - name: Publish the New Release
+        if: steps.check_release.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_tag.outputs.tag }}
+          name: "Custom Build ${{ steps.get_tag.outputs.tag }}"
+          body: "Automated compile of pldmgr.elf with autoloader payload mirroring."
+          files: pldmgr.elf
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
