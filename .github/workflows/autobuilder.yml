@@ -46,7 +46,7 @@ jobs:
         if: steps.check_release.outputs.exists == 'false'
         run: |
           cat << 'EOF' > patch_c_code.py
-          import os, re, sys
+          import os, sys
 
           # 1. Find the target C file
           target_file = None
@@ -67,7 +67,7 @@ jobs:
           with open(target_file, 'r', encoding='utf-8') as f:
               content = f.read()
 
-          # 2. The robust C helper functions using raw strings to protect formatting
+          # 2. The robust C helper functions using raw strings
           helpers = r"""
           static const char* get_autoloader_dest_name(const char *filename) {
               if (!filename) return NULL;
@@ -97,31 +97,35 @@ jobs:
 
           # 3. Inject Helper Functions
           if "void payload_mgr_remove_old_files" not in content:
-              print("Error: Target anchor for helpers not found")
+              print("Error: Target anchor for helpers not found. The source code may have changed.")
               sys.exit(1)
           content = content.replace("void payload_mgr_remove_old_files", helpers + "\n\nvoid payload_mgr_remove_old_files")
 
-          # 4. Inject Network Copy
-          net_pattern = re.compile(r'(if\s*\(\s*rename\s*\(\s*temp_path\s*,\s*final_path\s*\)\s*!=\s*0\s*\)\s*\{[^\}]+\})')
-          if not net_pattern.search(content):
-              print("Error: Network rename hook failed to match")
+          # 4. Inject Autoloader copy logic safely (No Regex!)
+          # This line exists identically in both the Network and USB functions right after the file is saved.
+          target_line = 'snprintf(details_path, sizeof(details_path), "%s/%s.json", payload_dir, filename);'
+          
+          if target_line not in content:
+              print(f"Error: Injection anchor '{target_line}' not found. The source code may have changed.")
               sys.exit(1)
-          content = net_pattern.sub(r'\1\n\n    handle_autoloader_copy(final_path, filename);', content)
+              
+          # Replaces the line with our function call, followed by the original line.
+          replacement = f'handle_autoloader_copy(final_path, filename);\n    {target_line}'
+          content = content.replace(target_line, replacement)
 
-          # 5. Inject USB Copy
-          usb_pattern = re.compile(r'(if\s*\(\s*copy_file\s*\(\s*usb_path\s*,\s*final_path\s*\)\s*!=\s*0\s*\)\s*\{[^\}]+\})')
-          if not usb_pattern.search(content):
-              print("Error: USB copy hook failed to match")
+          # Verify it patched both locations (USB and Network)
+          if content.count('handle_autoloader_copy(final_path, filename);') < 2:
+              print("Error: Expected to patch 2 locations (Network & USB), but found fewer. Source changed!")
               sys.exit(1)
-          content = usb_pattern.sub(r'\1\n\n    handle_autoloader_copy(final_path, filename);', content)
 
-          # 6. Save modified code
+          # 5. Save modified code
           with open(target_file, 'w', encoding='utf-8') as f:
               f.write(content)
               
           print(f"Injection successful! Modified file: {target_file}")
           EOF
           python3 patch_c_code.py
+
 
       - name: Setup Node.js (For Web UI Build)
         if: steps.check_release.outputs.exists == 'false'
