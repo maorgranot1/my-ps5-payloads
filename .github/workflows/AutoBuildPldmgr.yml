@@ -125,7 +125,8 @@ jobs:
 
           repo_content = repo_content.replace(repo_anchor, helpers + "\n\n" + repo_anchor, 1)
 
-          repo_hook = "write_payload_details_json(&items[found], details_path, install_source, install_source_detail)"
+          # Match the complete 'if (' statement in repository.c
+          repo_hook = "if (write_payload_details_json(&items[found], details_path, install_source, install_source_detail) != 0) {"
           if repo_hook not in repo_content:
               print("Error: write_payload_details_json hook line not found in repository.c")
               sys.exit(1)
