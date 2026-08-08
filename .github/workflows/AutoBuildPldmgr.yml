@@ -49,33 +49,12 @@ jobs:
         run: |
           find . -type f -exec sed -i 's|https://itsplk.github.io/ps5-payloads-mirror/payloads.json|https://maorgranot1.github.io/my-ps5-payloads/P.json|g' {} +
 
-      - name: Inject Autoloader Copy Logic into payload_mgr.c
+      - name: Patch repository.c and payload_mgr.c for Autoloader Mirroring
         if: steps.check_release.outputs.exists == 'false'
         run: |
           cat << 'EOF' > patch_c_code.py
           import os, sys
 
-          # 1. Target payload_mgr.c
-          target_file = None
-          for root, dirs, files in os.walk('.'):
-              for file in files:
-                  if file.endswith('.c'):
-                      path = os.path.join(root, file)
-                      with open(path, 'r', encoding='utf-8') as f:
-                          if 'payload_mgr_import_to_storage' in f.read():
-                              target_file = path
-                              break
-              if target_file: break
-
-          if not target_file:
-              print("Error: Could not find payload_mgr.c")
-              sys.exit(1)
-
-          print(f"Targeting C file for patch: {target_file}")
-          with open(target_file, 'r', encoding='utf-8') as f:
-              content = f.read()
-
-          # 2. Helper functions
           helpers = r"""
           static const char* get_autoloader_dest_name(const char *filename) {
               if (!filename) return NULL;
@@ -92,6 +71,28 @@ jobs:
               return NULL;
           }
 
+          static int autoloader_copy_file(const char *src, const char *dst) {
+              FILE *in = fopen(src, "rb");
+              if (!in) return -1;
+              FILE *out = fopen(dst, "wb");
+              if (!out) {
+                  fclose(in);
+                  return -1;
+              }
+              char buf[8192];
+              size_t n;
+              while ((n = fread(buf, 1, sizeof(buf), in)) > 0) {
+                  if (fwrite(buf, 1, n, out) != n) {
+                      fclose(in);
+                      fclose(out);
+                      return -1;
+                  }
+              }
+              fclose(in);
+              fclose(out);
+              return 0;
+          }
+
           static void handle_autoloader_copy(const char *src_path, const char *filename) {
               const char* dest_name = get_autoloader_dest_name(filename);
               if (dest_name != NULL) {
@@ -99,7 +100,7 @@ jobs:
                   ensure_dir_recursive("/data/ps5_autoloader");
                   snprintf(auto_path, sizeof(auto_path), "/data/ps5_autoloader/%s", dest_name);
                   
-                  if (copy_file(src_path, auto_path) == 0) {
+                  if (autoloader_copy_file(src_path, auto_path) == 0) {
                       pldmgr_log("[PLDMGR] Autoloader mirror updated successfully: %s\n", dest_name);
                   } else {
                       pldmgr_log("[PLDMGR] ERROR: Failed to update autoloader mirror for %s\n", dest_name);
@@ -108,34 +109,73 @@ jobs:
           }
           """
 
-          # 3. Insert helpers AFTER includes and copy_file
-          anchor_helpers = "void payload_mgr_remove_old_files"
-          if anchor_helpers not in content:
-              print("Error: Anchor 'void payload_mgr_remove_old_files' not found")
+          # --- 1. Patch src/repository.c (Handles Repository Downloads) ---
+          repo_file = "src/repository.c"
+          if not os.path.exists(repo_file):
+              print("Error: src/repository.c not found")
               sys.exit(1)
 
-          content = content.replace(anchor_helpers, helpers + "\n\n" + anchor_helpers, 1)
+          with open(repo_file, 'r', encoding='utf-8') as f:
+              repo_content = f.read()
 
-          # 4. Inject hook into network import
+          repo_anchor = "int repository_install_commit("
+          if repo_anchor not in repo_content:
+              print("Error: repository_install_commit anchor not found in repository.c")
+              sys.exit(1)
+
+          repo_content = repo_content.replace(repo_anchor, helpers + "\n\n" + repo_anchor, 1)
+
+          repo_hook = "write_payload_details_json(&items[found], details_path, install_source, install_source_detail)"
+          if repo_hook not in repo_content:
+              print("Error: write_payload_details_json hook line not found in repository.c")
+              sys.exit(1)
+
+          repo_content = repo_content.replace(
+              repo_hook,
+              f'handle_autoloader_copy(final_path, items[found].filename);\n    {repo_hook}',
+              1
+          )
+
+          with open(repo_file, 'w', encoding='utf-8') as f:
+              f.write(repo_content)
+          print("Successfully patched src/repository.c")
+
+          # --- 2. Patch src/payload_mgr.c (Handles Manual & USB Uploads) ---
+          payload_file = "src/payload_mgr.c"
+          if not os.path.exists(payload_file):
+              print("Error: src/payload_mgr.c not found")
+              sys.exit(1)
+
+          with open(payload_file, 'r', encoding='utf-8') as f:
+              payload_content = f.read()
+
+          payload_anchor = "void payload_mgr_remove_old_files"
+          if payload_anchor not in payload_content:
+              print("Error: payload_mgr_remove_old_files anchor not found in payload_mgr.c")
+              sys.exit(1)
+
+          payload_content = payload_content.replace(payload_anchor, helpers + "\n\n" + payload_anchor, 1)
+
           target_net = 'write_simple_payload_details_json(filename, details_path, install_source, install_source_detail);'
-          if target_net not in content:
-              print("Error: Network import anchor line not found!")
-              sys.exit(1)
+          if target_net in payload_content:
+              payload_content = payload_content.replace(
+                  target_net,
+                  f'handle_autoloader_copy(final_path, filename);\n    {target_net}',
+                  1
+              )
 
-          content = content.replace(target_net, f'handle_autoloader_copy(final_path, filename);\n    {target_net}', 1)
-
-          # 5. Inject hook into USB move
           target_usb = 'write_simple_payload_details_json(filename, details_path, "usb", usb_path);'
-          if target_usb not in content:
-              print("Error: USB move anchor line not found!")
-              sys.exit(1)
+          if target_usb in payload_content:
+              payload_content = payload_content.replace(
+                  target_usb,
+                  f'handle_autoloader_copy(final_path, filename);\n    {target_usb}',
+                  1
+              )
 
-          content = content.replace(target_usb, f'handle_autoloader_copy(final_path, filename);\n    {target_usb}', 1)
+          with open(payload_file, 'w', encoding='utf-8') as f:
+              f.write(payload_content)
+          print("Successfully patched src/payload_mgr.c")
 
-          with open(target_file, 'w', encoding='utf-8') as f:
-              f.write(content)
-              
-          print("Autoloader patch successfully injected after headers!")
           EOF
           python3 patch_c_code.py
       
