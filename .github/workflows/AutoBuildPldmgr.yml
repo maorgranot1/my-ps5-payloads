@@ -15,15 +15,23 @@ jobs:
       - name: Get latest release version of official pldmgr
         id: get_tag
         run: |
-          LATEST_TAG=$(curl -s https://api.github.com/repos/itsPLK/ps5-payload-manager/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+          LATEST_TAG=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/itsPLK/ps5-payload-manager/releases/latest | jq -r '.tag_name')
+          
+          if [ -z "$LATEST_TAG" ] || [ "$LATEST_TAG" = "null" ]; then
+            echo "Error: Failed to fetch latest tag from upstream repository."
+            exit 1
+          fi
+
           echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "Found upstream tag: $LATEST_TAG"
           
       - name: Check if we already released this version
         id: check_release
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ steps.get_tag.outputs.tag }})
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ steps.get_tag.outputs.tag }})
           if [ "$STATUS" = "200" ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Release ${{ steps.get_tag.outputs.tag }} already exists. Skipping."
           else
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
@@ -100,7 +108,7 @@ jobs:
           }
           """
 
-          # 3. Insert helpers AFTER copy_file and includes (right before payload_mgr_remove_old_files)
+          # 3. Insert helpers AFTER includes and copy_file
           anchor_helpers = "void payload_mgr_remove_old_files"
           if anchor_helpers not in content:
               print("Error: Anchor 'void payload_mgr_remove_old_files' not found")
@@ -135,7 +143,7 @@ jobs:
         if: steps.check_release.outputs.exists == 'false'
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Build the Web Interface
         if: steps.check_release.outputs.exists == 'false'
