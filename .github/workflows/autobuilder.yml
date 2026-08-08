@@ -72,9 +72,10 @@ jobs:
           static const char* get_autoloader_dest_name(const char *filename) {
               if (!filename) return NULL;
               char lower[256];
+              int i;
               strncpy(lower, filename, sizeof(lower) - 1);
               lower[255] = '\0';
-              for (int i = 0; lower[i]; i++) {
+              for (i = 0; lower[i]; i++) {
                   lower[i] = tolower((unsigned char)lower[i]);
               }
               if (strstr(lower, "kstuff") != NULL) return "kstuff.elf";
@@ -86,8 +87,8 @@ jobs:
           static void handle_autoloader_copy(const char *src_path, const char *filename) {
               const char* dest_name = get_autoloader_dest_name(filename);
               if (dest_name != NULL) {
-                  mkdir("/data/ps5_autoloader", 0777); 
                   char auto_path[512];
+                  ensure_dir_recursive("/data/ps5_autoloader");
                   snprintf(auto_path, sizeof(auto_path), "/data/ps5_autoloader/%s", dest_name);
                   copy_file(src_path, auto_path);
               }
@@ -100,14 +101,14 @@ jobs:
               sys.exit(1)
           content = content.replace("void payload_mgr_remove_old_files", helpers + "\n\nvoid payload_mgr_remove_old_files")
 
-          # 4. Inject Network Copy (Regex catches the entire if-rename block securely)
+          # 4. Inject Network Copy
           net_pattern = re.compile(r'(if\s*\(\s*rename\s*\(\s*temp_path\s*,\s*final_path\s*\)\s*!=\s*0\s*\)\s*\{[^\}]+\})')
           if not net_pattern.search(content):
               print("Error: Network rename hook failed to match")
               sys.exit(1)
           content = net_pattern.sub(r'\1\n\n    handle_autoloader_copy(final_path, filename);', content)
 
-          # 5. Inject USB Copy (Regex catches the entire if-copy block securely)
+          # 5. Inject USB Copy
           usb_pattern = re.compile(r'(if\s*\(\s*copy_file\s*\(\s*usb_path\s*,\s*final_path\s*\)\s*!=\s*0\s*\)\s*\{[^\}]+\})')
           if not usb_pattern.search(content):
               print("Error: USB copy hook failed to match")
@@ -118,7 +119,7 @@ jobs:
           with open(target_file, 'w', encoding='utf-8') as f:
               f.write(content)
               
-          print("Injection successful!")
+          print(f"Injection successful! Modified file: {target_file}")
           EOF
           python3 patch_c_code.py
 
@@ -150,3 +151,4 @@ jobs:
           files: pldmgr.elf
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
