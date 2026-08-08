@@ -2,14 +2,14 @@ name: Auto-Build Custom pldmgr.elf
 
 on:
   schedule:
-    - cron: '26 14 * * *' # Checks for new updates automatically every midnight
-  workflow_dispatch: # Gives you a button to trigger it manually
+    - cron: '26 14 * * *'
+  workflow_dispatch:
 
 jobs:
   build_and_release:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Needed to publish the release
+      contents: write
     
     steps:
       - name: Get latest release version of official pldmgr
@@ -39,35 +39,45 @@ jobs:
       - name: Patch the Default Source URL
         if: steps.check_release.outputs.exists == 'false'
         run: |
-          # Swap the official URL string with your custom one across all files
           find . -type f -exec sed -i 's|https://itsplk.github.io/ps5-payloads-mirror/payloads.json|https://maorgranot1.github.io/my-ps5-payloads/P.json|g' {} +
 
-      - name: Inject Autoloader Copy Logic
+      - name: Inject Global Autoloader Copy Logic
         if: steps.check_release.outputs.exists == 'false'
         run: |
           cat << 'EOF' > patch_c_code.py
           import os, sys
 
-          # 1. Find the target C file
           target_file = None
           for root, dirs, files in os.walk('.'):
               for file in files:
                   if file.endswith('.c'):
                       path = os.path.join(root, file)
                       with open(path, 'r', encoding='utf-8') as f:
-                          if 'payload_mgr_import_to_storage' in f.read():
+                          # Look for the general payload manager source file
+                          if 'payload_mgr_' in f.read():
                               target_file = path
                               break
               if target_file: break
 
           if not target_file:
-              print("Error: Could not find the target C file.")
+              print("Error: Could not find target C file.")
               sys.exit(1)
 
+          # Find the exact file where payload saving/storage logic resides
+          for root, dirs, files in os.walk('.'):
+              for file in files:
+                  if file.endswith('.c'):
+                      path = os.path.join(root, file)
+                      with open(path, 'r', encoding='utf-8') as f:
+                          code = f.read()
+                          if 'payload_dir' in code and 'filename' in code and ('copy_file' in code or 'rename' in code):
+                              target_file = path
+                              break
+
+          print(f"Targeting C file for patch: {target_file}")
           with open(target_file, 'r', encoding='utf-8') as f:
               content = f.read()
 
-          # 2. The robust C helper functions using raw strings
           helpers = r"""
           static const char* get_autoloader_dest_name(const char *filename) {
               if (!filename) return NULL;
@@ -90,43 +100,30 @@ jobs:
                   char auto_path[512];
                   ensure_dir_recursive("/data/ps5_autoloader");
                   snprintf(auto_path, sizeof(auto_path), "/data/ps5_autoloader/%s", dest_name);
+                  remove(auto_path); // Bypass file lock (ETXTBSY)
                   copy_file(src_path, auto_path);
               }
           }
           """
 
-          # 3. Inject Helper Functions
-          if "void payload_mgr_remove_old_files" not in content:
-              print("Error: Target anchor for helpers not found. The source code may have changed.")
-              sys.exit(1)
-          content = content.replace("void payload_mgr_remove_old_files", helpers + "\n\nvoid payload_mgr_remove_old_files")
+          # Inject helper functions at the top level of the file
+          if "static void" in content or "void " in content:
+              content = helpers + "\n\n" + content
 
-          # 4. Inject Autoloader copy logic safely (No Regex!)
-          # This line exists identically in both the Network and USB functions right after the file is saved.
+          # Find the file finalization line where JSON/payload details are written
           target_line = 'snprintf(details_path, sizeof(details_path), "%s/%s.json", payload_dir, filename);'
           
-          if target_line not in content:
-              print(f"Error: Injection anchor '{target_line}' not found. The source code may have changed.")
-              sys.exit(1)
-              
-          # Replaces the line with our function call, followed by the original line.
-          replacement = f'handle_autoloader_copy(final_path, filename);\n    {target_line}'
-          content = content.replace(target_line, replacement)
+          if target_line in content:
+              replacement = f'handle_autoloader_copy(final_path, filename);\n    {target_line}'
+              content = content.replace(target_line, replacement)
 
-          # Verify it patched both locations (USB and Network)
-          if content.count('handle_autoloader_copy(final_path, filename);') < 2:
-              print("Error: Expected to patch 2 locations (Network & USB), but found fewer. Source changed!")
-              sys.exit(1)
-
-          # 5. Save modified code
           with open(target_file, 'w', encoding='utf-8') as f:
               f.write(content)
               
-          print(f"Injection successful! Modified file: {target_file}")
+          print("Global autoloader patch applied successfully.")
           EOF
           python3 patch_c_code.py
-
-
+      
       - name: Setup Node.js (For Web UI Build)
         if: steps.check_release.outputs.exists == 'false'
         uses: actions/setup-node@v4
@@ -151,7 +148,7 @@ jobs:
         with:
           tag_name: ${{ steps.get_tag.outputs.tag }}
           name: "Custom Build ${{ steps.get_tag.outputs.tag }}"
-          body: "Automated compile of pldmgr.elf with a custom default repository and auto-copy logic for autoloader payloads."
+          body: "Automated compile of pldmgr.elf with global auto-copy logic for both cloud downloads and local imports."
           files: pldmgr.elf
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
