@@ -41,7 +41,7 @@ jobs:
         run: |
           find . -type f -exec sed -i 's|https://itsplk.github.io/ps5-payloads-mirror/payloads.json|https://maorgranot1.github.io/my-ps5-payloads/P.json|g' {} +
 
-      - name: Inject Global Autoloader Copy Logic with Headers
+      - name: Inject Autoloader Copy Logic with Error Logging
         if: steps.check_release.outputs.exists == 'false'
         run: |
           cat << 'EOF' > patch_c_code.py
@@ -50,28 +50,23 @@ jobs:
           target_file = None
           for root, dirs, files in os.walk('.'):
               for file in files:
-                  if file.endswith('repository.c'):
-                      target_file = os.path.join(root, file)
-                      break
+                  if file.endswith('.c'):
+                      path = os.path.join(root, file)
+                      with open(path, 'r', encoding='utf-8') as f:
+                          if 'payload_mgr_import_to_storage' in f.read():
+                              target_file = path
+                              break
               if target_file: break
 
           if not target_file:
-              print("Error: Could not find repository.c")
+              print("Error: Could not find payload_mgr.c")
               sys.exit(1)
 
           print(f"Targeting C file for patch: {target_file}")
           with open(target_file, 'r', encoding='utf-8') as f:
               content = f.read()
 
-          # Include missing headers and declare external functions to fix implicit declaration errors
           helpers = r"""
-          #include <string.h>
-          #include <ctype.h>
-          #include <stdio.h>
-
-          extern int ensure_dir_recursive(const char *path);
-          extern int copy_file(const char *src, const char *dst);
-
           static const char* get_autoloader_dest_name(const char *filename) {
               if (!filename) return NULL;
               char lower[256];
@@ -93,25 +88,32 @@ jobs:
                   char auto_path[512];
                   ensure_dir_recursive("/data/ps5_autoloader");
                   snprintf(auto_path, sizeof(auto_path), "/data/ps5_autoloader/%s", dest_name);
-                  remove(auto_path); // Bypass file lock (ETXTBSY)
-                  copy_file(src_path, auto_path);
+                  
+                  if (copy_file(src_path, auto_path) == 0) {
+                      pldmgr_log("[PLDMGR] Autoloader mirror updated successfully: %s\n", dest_name);
+                  } else {
+                      pldmgr_log("[PLDMGR] ERROR: Failed to update autoloader mirror for %s (File may be locked/in use)\n", dest_name);
+                  }
               }
           }
           """
 
-          # Prepend headers and helpers to the top of the file
           content = helpers + "\n\n" + content
 
-          target_line = 'snprintf(details_path, sizeof(details_path), "%s/%s.json", payload_dir, filename);'
-          
-          if target_line in content:
-              replacement = f'handle_autoloader_copy(final_path, filename);\n    {target_line}'
-              content = content.replace(target_line, replacement)
+          target_line_net = 'snprintf(details_path, sizeof(details_path), "%s/%s.json", payload_dir, filename);'
+          if target_line_net in content:
+              replacement_net = f'handle_autoloader_copy(final_path, filename);\n    {target_line_net}'
+              content = content.replace(target_line_net, replacement_net, 1)
+
+          target_line_usb = 'write_simple_payload_details_json(filename, details_path, "usb", usb_path);'
+          if target_line_usb in content:
+              replacement_usb = f'handle_autoloader_copy(final_path, filename);\n    {target_line_usb}'
+              content = content.replace(target_line_usb, replacement_usb, 1)
 
           with open(target_file, 'w', encoding='utf-8') as f:
               f.write(content)
               
-          print("Global autoloader patch with headers applied successfully.")
+          print("Autoloader patch with logging applied successfully.")
           EOF
           python3 patch_c_code.py
       
