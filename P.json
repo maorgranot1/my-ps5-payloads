@@ -54,6 +54,15 @@
     "checksum": "a35246fb3bb6042b25653b51cdcbc33254b40339342bf1d2dd0d2eceee2ca526"
   },
   {
+    "name": "Payload Manager",
+    "filename": "pldmgr.elf",
+    "url": "https://github.com/maorgranot1/my-ps5-payloads/releases/download/v0.5.1/pldmgr.elf",
+    "description": "A modern, web-based dashboard to easily manage, import, and automatically load payloads on your PS5",
+    "last_update": "2026-08-07",
+    "version": "v0.5.1",
+    "checksum": "103c6a6965591d93dc0c012e8610610b3f59630aa691f378e4231c8dcb552748"
+  },
+  {
     "name": "etaHEN",
     "filename": "etaHEN-2.5B.bin",
     "url": "https://github.com/etaHEN/etaHEN/releases/download/2.5B/etaHEN-2.5B.bin",
