@@ -79,3 +79,13 @@ To add or remove payloads, simply edit `P.json`. Ensure the URL format strictly 
 * **[juma-sayeh](https://github.com/juma-sayeh)** for `PS5 Game Compressor`.
 * **[earthonion](https://github.com/earthonion)** for `Garlic SaveMgr`.
 * **[soniciso](https://git.etawen.dev/soniciso)** for `Elf Arsenal`.
+
+## ⚖️ License & Open Source Compliance
+
+This project automatically downloads, patches, and compiles [itsPLK's PS5 Payload Manager](https://github.com/itsPLK/ps5-payload-manager), which is licensed under the **GNU General Public License v3.0 (GPL-3.0)**. 
+
+In compliance with the GPL-3.0:
+* The distributed `pldmgr.elf` binaries in the Releases tab are licensed under GPL-3.0.
+* The exact modifications made to the original C code are fully visible and open-source within the `patch_c_code.py` script located in `.github/workflows/AutoBuildPldmgr.yml`.
+* No proprietary, closed-source code is injected into the application.
+* 
