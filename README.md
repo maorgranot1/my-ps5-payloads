@@ -88,4 +88,3 @@ In compliance with the GPL-3.0:
 * The distributed `pldmgr.elf` binaries in the Releases tab are licensed under GPL-3.0.
 * The exact modifications made to the original C code are fully visible and open-source within the `patch_c_code.py` script located in `.github/workflows/AutoBuildPldmgr.yml`.
 * No proprietary, closed-source code is injected into the application.
-* 
