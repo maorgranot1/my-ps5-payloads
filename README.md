@@ -68,3 +68,9 @@ If you fork this repository to create your own payload ecosystem, you will need 
 ## 📝 Modifying Tracked Payloads
 
 To add or remove payloads, simply edit `P.json`. Ensure the URL format strictly follows standard GitHub or Gitea release structures, as `update_releases.py` uses Regex to extract the domain, owner, and repository to query the correct API.
+
+## 🙏 Credits & Acknowledgments
+
+* **[itsPLK](https://github.com/itsPLK)**: Massive credit for creating the original, incredible [PS5 Payload Manager](https://github.com/itsPLK/ps5-payload-manager) which this project forks and modifies. All frontend UI and core payload execution logic belongs to them.
+* **[etaHEN / LightningMods]**, **[EchoStretch]**, **[drakmor]**, and all other payload developers for their massive contributions to the PS5 scene.
+* 
