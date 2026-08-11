@@ -72,5 +72,10 @@ To add or remove payloads, simply edit `P.json`. Ensure the URL format strictly 
 ## 🙏 Credits & Acknowledgments
 
 * **[itsPLK](https://github.com/itsPLK)**: Massive credit for creating the original, incredible [PS5 Payload Manager](https://github.com/itsPLK/ps5-payload-manager) which this project forks and modifies. All frontend UI and core payload execution logic belongs to them.
-* **[etaHEN / LightningMods]**, **[EchoStretch]**, **[drakmor]**, and all other payload developers for their massive contributions to the PS5 scene.
-* 
+* **[ps5-payload-dev team](https://github.com/ps5-payload-dev)** (John Törnblom, Specter, etc.) for `ftpsrv` and foundational PS5 SDK work.
+* **[LightningMods / etaHEN team](https://github.com/etaHEN)** for `etaHEN`.
+* **[EchoStretch](https://github.com/EchoStretch)** for `kstuff-lite`.
+* **[drakmor](https://github.com/drakmor)** for `nanoDNS` and `ShadowMountPlus`.
+* **[juma-sayeh](https://github.com/juma-sayeh)** for `PS5 Game Compressor`.
+* **[earthonion](https://github.com/earthonion)** for `Garlic SaveMgr`.
+* **[soniciso](https://git.etawen.dev/soniciso)** for `Elf Arsenal`.
