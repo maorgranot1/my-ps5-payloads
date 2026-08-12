@@ -29,11 +29,11 @@
   {
     "name": "kstuff-lite",
     "filename": "kstuff.elf",
-    "url": "https://github.com/EchoStretch/kstuff-lite/releases/download/v1.09/kstuff.elf",
+    "url": "https://github.com/EchoStretch/kstuff-lite/releases/download/v1.10/kstuff.elf",
     "description": "Kernel patcher that enables to install & run unsigned game packages",
-    "last_update": "2026-08-04",
-    "version": "v1.09",
-    "checksum": "ec5212794dc6e44ee8e70fd0549abec6d3dac8c3e03ddbeafd9f869ffe97d4e8"
+    "last_update": "2026-08-12",
+    "version": "v1.10",
+    "checksum": "b1dfe57f367a35374f605127915eda38c76a6ed5d1c729e427955798bd78c66a"
   },
   {
     "name": "nanoDNS",
