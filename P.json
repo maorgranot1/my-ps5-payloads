@@ -33,7 +33,7 @@
     "description": "Kernel patcher that enables to install & run unsigned game packages",
     "last_update": "2026-09-21",
     "version": "v1.11",
-    "checksum": "62d9bb6f16531e1c10fd522cb918431eaa3319dcd37405af5cc0b2240d7b2ee5"
+    "checksum": "ab9a6cb4d3b1daf139d4d646e402b1cf569071acd64599c936d7a3a6164dc779"
   },
   {
     "name": "nanoDNS",
