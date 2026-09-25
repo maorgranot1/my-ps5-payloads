@@ -42,7 +42,7 @@
     "description": "A lightweight DNS proxy that blocks PlayStation update servers",
     "last_update": "2026-08-08",
     "version": "0.4",
-    "checksum": "dcb845f3570771275b22b37534bf924a7f8ae219fb91ef00c6bccab85d1c2420"
+    "checksum": "fcfb7d47c3b295560ea1603dc015f7c4950353ef0faca16428bd425680ef1fc5"
   },
   {
     "name": "ShadowMountPlus",
