@@ -50,7 +50,7 @@
     "url": "https://github.com/drakmor/ShadowMountPlus/releases/download/1.7-beta5fix1/shadowmountplus.elf",
     "description": "A utility that mounts game packages and disk images as virtual directories",
     "last_update": "2026-10-10",
-    "version": "1.7beta5fix1",
+    "version": "1.7-beta5fix1",
     "checksum": "e85fd63b705498488f39c09c9aea6f9fa22e0df2e932865de49a8cedf25172d5"
   },
   {
