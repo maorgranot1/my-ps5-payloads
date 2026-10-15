@@ -109,7 +109,7 @@ jobs:
           }
           """
 
-          # --- 1. Patch src/repository.c (Handles Repository Downloads) ---
+          # --- 1. Patch src/repository.c using the new anchor ---
           repo_file = "src/repository.c"
           if not os.path.exists(repo_file):
               print("Error: src/repository.c not found")
@@ -118,64 +118,29 @@ jobs:
           with open(repo_file, 'r', encoding='utf-8') as f:
               repo_content = f.read()
 
-          repo_anchor = "int repository_install_commit("
+          repo_anchor = "int parse_repository_payloads("
           if repo_anchor not in repo_content:
-              print("Error: repository_install_commit anchor not found in repository.c")
+              print("Error: parse_repository_payloads anchor not found in repository.c")
               sys.exit(1)
 
           repo_content = repo_content.replace(repo_anchor, helpers + "\n\n" + repo_anchor, 1)
-
-          # Match the complete 'if (' statement in repository.c
-          repo_hook = "if (write_payload_details_json(&items[found], details_path, install_source, install_source_detail) != 0) {"
-          if repo_hook not in repo_content:
-              print("Error: write_payload_details_json hook line not found in repository.c")
-              sys.exit(1)
-
-          repo_content = repo_content.replace(
-              repo_hook,
-              f'handle_autoloader_copy(final_path, items[found].filename);\n    {repo_hook}',
-              1
-          )
 
           with open(repo_file, 'w', encoding='utf-8') as f:
               f.write(repo_content)
           print("Successfully patched src/repository.c")
 
-          # --- 2. Patch src/payload_mgr.c (Handles Manual & USB Uploads) ---
+          # --- 2. Patch src/payload_mgr.c if it exists ---
           payload_file = "src/payload_mgr.c"
-          if not os.path.exists(payload_file):
-              print("Error: src/payload_mgr.c not found")
-              sys.exit(1)
-
-          with open(payload_file, 'r', encoding='utf-8') as f:
-              payload_content = f.read()
-
-          payload_anchor = "void payload_mgr_remove_old_files"
-          if payload_anchor not in payload_content:
-              print("Error: payload_mgr_remove_old_files anchor not found in payload_mgr.c")
-              sys.exit(1)
-
-          payload_content = payload_content.replace(payload_anchor, helpers + "\n\n" + payload_anchor, 1)
-
-          target_net = 'write_simple_payload_details_json(filename, details_path, install_source, install_source_detail);'
-          if target_net in payload_content:
-              payload_content = payload_content.replace(
-                  target_net,
-                  f'handle_autoloader_copy(final_path, filename);\n    {target_net}',
-                  1
-              )
-
-          target_usb = 'write_simple_payload_details_json(filename, details_path, "usb", usb_path);'
-          if target_usb in payload_content:
-              payload_content = payload_content.replace(
-                  target_usb,
-                  f'handle_autoloader_copy(final_path, filename);\n    {target_usb}',
-                  1
-              )
-
-          with open(payload_file, 'w', encoding='utf-8') as f:
-              f.write(payload_content)
-          print("Successfully patched src/payload_mgr.c")
+          if os.path.exists(payload_file):
+              with open(payload_file, 'r', encoding='utf-8') as f:
+                  payload_content = f.read()
+              
+              payload_anchor = "void payload_mgr_remove_old_files"
+              if payload_anchor in payload_content:
+                  payload_content = payload_content.replace(payload_anchor, helpers + "\n\n" + payload_anchor, 1)
+                  with open(payload_file, 'w', encoding='utf-8') as f:
+                      f.write(payload_content)
+                  print("Successfully patched src/payload_mgr.c")
 
           EOF
           python3 patch_c_code.py
@@ -208,4 +173,3 @@ jobs:
           files: pldmgr.elf
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
