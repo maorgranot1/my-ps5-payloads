@@ -56,11 +56,11 @@
   {
     "name": "Payload Manager",
     "filename": "pldmgr.elf",
-    "url": "https://github.com/maorgranot1/my-ps5-payloads/releases/download/v0.6.1/pldmgr.elf",
+    "url": "https://github.com/maorgranot1/my-ps5-payloads/releases/download/v0.6.3/pldmgr.elf",
     "description": "A modern, web-based dashboard to easily manage, import, and automatically load payloads on your PS5",
-    "last_update": "2026-10-15",
-    "version": "v0.6.1",
-    "checksum": "50e231320463af7eded49243d93f4cea433fc1edc60185f4ba1d2d4d5b4b8ac9"
+    "last_update": "2026-10-19",
+    "version": "v0.6.3",
+    "checksum": "6e250b59dd59376b7d8080d0e430ad5990dfe5aad64c5076e8fe4398b52bfeef"
   },
   {
     "name": "etaHEN",
