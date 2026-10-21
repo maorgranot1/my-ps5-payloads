@@ -20,11 +20,11 @@
   {
     "name": "Garlic SaveMgr for PS5",
     "filename": "garlic-savemgr.elf",
-    "url": "https://github.com/earthonion/garlic-savemgr/releases/download/v1.7/garlic-savemgr.elf",
+    "url": "https://github.com/earthonion/garlic-savemgr/releases/download/v1.14/garlic-savemgr.elf",
     "description": "A utility that extracts, backs up, and restores game save files",
-    "last_update": "2026-08-04",
-    "version": "v1.7",
-    "checksum": "124051ab3a762474720ae53187d2920bc96d6be1d69aa298e715667efc385a2f"
+    "last_update": "2026-10-21",
+    "version": "v1.14",
+    "checksum": "aaec2cb0a39e94217665652fd84fa7706f09c9f8640c07785b6a68b1711f18fc"
   },
   {
     "name": "kstuff-lite",
@@ -47,11 +47,11 @@
   {
     "name": "ShadowMountPlus",
     "filename": "shadowmountplus.elf",
-    "url": "https://github.com/drakmor/ShadowMountPlus/releases/download/1.7-beta5fix1/shadowmountplus.elf",
+    "url": "https://github.com/drakmor/ShadowMountPlus/releases/download/1.7beta7/shadowmountplus.elf",
     "description": "A utility that mounts game packages and disk images as virtual directories",
-    "last_update": "2026-10-10",
-    "version": "1.7-beta5fix1",
-    "checksum": "e85fd63b705498488f39c09c9aea6f9fa22e0df2e932865de49a8cedf25172d5"
+    "last_update": "2026-10-21",
+    "version": "1.7beta7",
+    "checksum": "a8f9d7f76e8749912508ade0cd5c78076b5bbf1271813c78c80c3d3d9d4777ee"
   },
   {
     "name": "Payload Manager",
