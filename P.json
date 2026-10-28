@@ -47,11 +47,11 @@
   {
     "name": "ShadowMountPlus",
     "filename": "shadowmountplus.elf",
-    "url": "https://github.com/drakmor/ShadowMountPlus/releases/download/1.7beta7/shadowmountplus.elf",
+    "url": "https://github.com/drakmor/ShadowMountPlus/releases/download/1.7beta9/shadowmountplus.elf",
     "description": "A utility that mounts game packages and disk images as virtual directories",
-    "last_update": "2026-10-21",
-    "version": "1.7beta7",
-    "checksum": "a8f9d7f76e8749912508ade0cd5c78076b5bbf1271813c78c80c3d3d9d4777ee"
+    "last_update": "2026-10-28",
+    "version": "1.7beta9",
+    "checksum": "928a5a7e33d2801c1c14a5ed8ad83fcab07957ba3a5daccd382dba67d408b3e2"
   },
   {
     "name": "Payload Manager",
