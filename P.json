@@ -20,11 +20,11 @@
   {
     "name": "Garlic SaveMgr for PS5",
     "filename": "garlic-savemgr.elf",
-    "url": "https://github.com/earthonion/garlic-savemgr/releases/download/v1.15-beta12/garlic-savemgr.elf",
+    "url": "https://github.com/earthonion/garlic-savemgr/releases/download/v1.15-beta15/garlic-savemgr.elf",
     "description": "A utility that extracts, backs up, and restores game save files",
-    "last_update": "2026-11-06",
-    "version": "v1.15-beta12",
-    "checksum": "ad4b49a58375def0d1d4d3772b369ee5d50dc2ff571bdd4ea0c6294a822fe0fc"
+    "last_update": "2026-11-08",
+    "version": "v1.15-beta15",
+    "checksum": "775fa63ffa9b70e80414c6ec8c359cf91c3af45f771eea55e3fedad91f880ad0"
   },
   {
     "name": "kstuff-lite",
