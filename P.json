@@ -2,11 +2,11 @@
   {
     "name": "ftpsrv",
     "filename": "ftpsrv-ps5.elf",
-    "url": "https://github.com/ps5-payload-dev/ftpsrv/releases/download/v0.21.1/ftpsrv-ps5.elf",
+    "url": "https://github.com/ps5-payload-dev/ftpsrv/releases/download/v0.22/ftpsrv-ps5.elf",
     "description": "A simple FTP server that accepts connections on port 2121",
-    "last_update": "2026-08-21",
-    "version": "v0.21.1",
-    "checksum": "7d4b31c83eae4e056580482a3a074e1db25922efc74ac1e439473b45d71a5938"
+    "last_update": "2026-11-09",
+    "version": "v0.22",
+    "checksum": "41148c2c1cad1ea9e7cfde03e389fa918e3338e896d06167346de09adbdc8757"
   },
   {
     "name": "PS5 Game Compressor",
@@ -20,11 +20,11 @@
   {
     "name": "Garlic SaveMgr for PS5",
     "filename": "garlic-savemgr.elf",
-    "url": "https://github.com/earthonion/garlic-savemgr/releases/download/v1.15-beta15/garlic-savemgr.elf",
+    "url": "https://github.com/earthonion/garlic-savemgr/releases/download/v1.15-beta20/garlic-savemgr.elf",
     "description": "A utility that extracts, backs up, and restores game save files",
-    "last_update": "2026-11-08",
-    "version": "v1.15-beta15",
-    "checksum": "775fa63ffa9b70e80414c6ec8c359cf91c3af45f771eea55e3fedad91f880ad0"
+    "last_update": "2026-11-09",
+    "version": "v1.15-beta20",
+    "checksum": "5af0a2c7ffcbd7b0c96de905458bddc2dcdcee8b18c51171ff9401aa3bed7e8d"
   },
   {
     "name": "kstuff-lite",
